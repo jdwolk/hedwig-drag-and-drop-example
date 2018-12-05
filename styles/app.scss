@@ -1,0 +1,55 @@
+$cardSectionBG: lightgrey;
+$cardBG: orange;
+
+.card-section {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  background-color: $cardSectionBG;
+  height: 40vh;
+  margin-bottom: 2vh;
+  margin-left: 2vw;
+  margin-right: 2vw;
+  border: 2px solid darken($cardSectionBG, 20%);
+}
+
+.card {
+  background-color: $cardBG;
+  height: 30vh;
+  width: 17vw;
+  padding: 1vh;
+  border: 1px solid darken($cardBG, 10%);
+  border-radius: 5px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-section-el {
+  margin-left: 1vw;
+}
+
+.card-section-el:nth-child(1) {
+  margin-left: 2vw;
+}
+
+.drop-section {
+  border: 2px dashed darken($cardSectionBG, 20%);
+}
+.drop-section.dropping {
+  background-color: lighten($cardSectionBG, 10%);
+  border: 2px dashed darken($cardSectionBG, 20%);
+}
+
+.drop-section-bg-contents {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  color: darken($cardSectionBG, 20%);
+  margin: 0 auto;
+  font-family: sans-serif;
+}
