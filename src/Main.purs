@@ -38,26 +38,30 @@ type Model = {
   topCards :: Array Card,
   bottomCards :: Array Card,
   draggedCard :: Maybe Card,
-  dropSectionIsTarget :: Boolean
+  dropSectionTarget :: Maybe CardSection
 }
+
+data CardSection = Top | Bottom
+
+derive instance eqCardSection :: Eq CardSection
 
 init :: Model
 init = {
-  topCards: [makeCard 1 "Get Schwifty", makeCard 2 "Hey Riiiiiick"],
+  topCards: [makeCard 1 "Get Schwifty", makeCard 2 "Hey Riiiiiick", makeCard 3 "Schlum-schlum-schlumalum"],
   bottomCards: [],
   draggedCard: Nothing,
-  dropSectionIsTarget: false
+  dropSectionTarget: Nothing
 }
 
 data Msg = CardDragStarted Card
          | CardDragEnded Card
          | CardDragged
-         | DraggedOverDropSection
-         | DroppedOnDropSection
+         | DraggedOver CardSection
+         | DroppedOnDropSection CardSection CardSection
          | SetDraggedCard Card
-         | SetDropSectionTarget
+         | SetDropSectionTarget CardSection
          | ClearDropSectionTarget
-         | AddCardToDropSection Card
+         | MoveCardBetweenSections CardSection CardSection Card
 
 update :: H.Update Model Msg
 update model = case _ of
@@ -71,35 +75,58 @@ update model = case _ of
       _ <- H.sync $ Console.log "Wubba-lubba-dub-dub!"
       pure ClearDropSectionTarget
     ]
-  DraggedOverDropSection ->
+  DraggedOver cardSection ->
     model :> [do
       _ <- H.sync $ Console.log "Dragged over drop section!"
-      pure SetDropSectionTarget
+      pure $ SetDropSectionTarget cardSection
     ]
-  DroppedOnDropSection ->
+  DroppedOnDropSection from to ->
     model :> [ do
-      _ <- H.sync $ Console.log "Schlum-schulm...schlumalum"
-      pure $ AddCardToDropSection $ makeCard 3 "Hallo"
+      let hello =
+            case model.draggedCard of
+              Nothing -> ClearDropSectionTarget
+              Just card -> MoveCardBetweenSections from to card
+      pure hello
     ]
   CardDragged ->
     model :> []
   SetDraggedCard card ->
     model { draggedCard = Just card } :> []
-  SetDropSectionTarget ->
-    model { dropSectionIsTarget = true } :> []
+  SetDropSectionTarget cardSection->
+    model { dropSectionTarget = Just cardSection } :> []
   ClearDropSectionTarget ->
-    model { dropSectionIsTarget = false } :> []
-  AddCardToDropSection card ->
-    model { bottomCards = (Array.snoc model.bottomCards card) } :> []
+    model { dropSectionTarget = Nothing } :> []
+  MoveCardBetweenSections Top Bottom card ->
+    model
+    { bottomCards = case Array.findIndex (\c -> c.id == card.id) model.bottomCards of
+                      Just _ -> model.bottomCards
+                      Nothing -> (Array.snoc model.bottomCards card)
+    , topCards = Array.filter (\c -> not (c.id == card.id) ) model.topCards
+    } :> []
+  MoveCardBetweenSections Bottom Top card ->
+    model
+    { bottomCards = Array.filter (\c -> not (c.id == card.id) ) model.bottomCards
+    , topCards = case Array.findIndex (\c -> c.id == card.id) model.topCards of
+                      Just _ -> model.topCards
+                      Nothing -> (Array.snoc model.topCards card)
+    } :> []
+  MoveCardBetweenSections _ _ card -> model :> []
 
-{--$ viewCard <$> bottomCards,--}
+
+  {--AddCardToDropSection card ->                                       --}
+  {--  model { bottomCards = (Array.snoc model.bottomCards card) } :> []--}
+
 view :: Model -> H.Html Msg
 view model = H.main [H.id "main"] [
-  H.div [H.class' "card-section"] $ viewCard <$> topCards,
   H.div [
-    H.class' $ "card-section drop-section " <> droppingClass model.dropSectionIsTarget,
-    onDrop DroppedOnDropSection,
-    onDragOver DraggedOverDropSection
+    H.class' "card-section",
+    onDrop $ DroppedOnDropSection Bottom Top,
+    onDragOver $ DraggedOver Top
+  ] $ viewCard <$> topCards,
+  H.div [
+    H.class' $ "card-section drop-section " <> droppingClass Bottom model.dropSectionTarget,
+    onDrop $ DroppedOnDropSection Top Bottom,
+    onDragOver $ DraggedOver Bottom
   ] $ viewCard <$> bottomCards
 ] where
   topCards = model.topCards
@@ -116,9 +143,9 @@ viewCard card =
     H.text card.name
   ]
 
-droppingClass :: Boolean -> String
-droppingClass false = ""
-droppingClass true = "dropping"
+droppingClass :: CardSection -> Maybe CardSection -> String
+droppingClass _ Nothing = ""
+droppingClass cs (Just otherCs) = if cs == otherCs then "dropping" else ""
 
 main :: Effect Unit
 main = do
