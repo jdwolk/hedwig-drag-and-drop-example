@@ -47,7 +47,11 @@ derive instance eqCardSection :: Eq CardSection
 
 init :: Model
 init = {
-  topCards: [makeCard 1 "Get Schwifty", makeCard 2 "Hey Riiiiiick", makeCard 3 "Schlum-schlum-schlumalum"],
+  topCards: [ makeCard 1 "Get Schwifty"
+            , makeCard 2 "Schlum-schlum-schlumalum"
+            , makeCard 3 "Wubba-lubba-dub-dub!"
+            , makeCard 4 "And that's the WAAAAY the news goes!"
+            ],
   bottomCards: [],
   draggedCard: Nothing,
   dropSectionTarget: Nothing
@@ -85,11 +89,11 @@ update model = case _ of
     ]
   DroppedOnDropSection from to ->
     model :> [ do
-      let hello =
+      let msg =
             case model.draggedCard of
               Nothing -> ClearDropSectionTarget
               Just card -> MoveCardBetweenSections from to card
-      pure hello
+      pure msg
     ]
   CardDragged ->
     model :> []
