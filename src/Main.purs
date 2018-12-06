@@ -63,6 +63,9 @@ data Msg = CardDragStarted Card
          | ClearDropSectionTarget
          | MoveCardBetweenSections CardSection CardSection Card
 
+removeCardFromCards :: Array Card -> Card -> Array Card
+removeCardFromCards cards card = Array.filter (\c -> not (c.id == card.id)) cards
+
 update :: H.Update Model Msg
 update model = case _ of
   CardDragStarted card ->
@@ -101,25 +104,21 @@ update model = case _ of
     { bottomCards = case Array.findIndex (\c -> c.id == card.id) model.bottomCards of
                       Just _ -> model.bottomCards
                       Nothing -> (Array.snoc model.bottomCards card)
-    , topCards = Array.filter (\c -> not (c.id == card.id) ) model.topCards
+    , topCards = removeCardFromCards model.topCards card
     } :> []
   MoveCardBetweenSections Bottom Top card ->
     model
-    { bottomCards = Array.filter (\c -> not (c.id == card.id) ) model.bottomCards
+    { bottomCards = removeCardFromCards model.bottomCards card
     , topCards = case Array.findIndex (\c -> c.id == card.id) model.topCards of
                       Just _ -> model.topCards
                       Nothing -> (Array.snoc model.topCards card)
     } :> []
   MoveCardBetweenSections _ _ card -> model :> []
 
-
-  {--AddCardToDropSection card ->                                       --}
-  {--  model { bottomCards = (Array.snoc model.bottomCards card) } :> []--}
-
 view :: Model -> H.Html Msg
 view model = H.main [H.id "main"] [
   H.div [
-    H.class' "card-section",
+    H.class' $ "card-section drop-section " <> droppingClass Top model.dropSectionTarget,
     onDrop $ DroppedOnDropSection Bottom Top,
     onDragOver $ DraggedOver Top
   ] $ viewCard <$> topCards,
