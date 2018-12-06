@@ -65,6 +65,7 @@ data Msg = CardDragStarted Card
          | SetDraggedCard Card
          | SetDropSectionTarget CardSection
          | ClearDropSectionTarget
+         | ClearDraggedCard
          | MoveCardBetweenSections CardSection CardSection Card
 
 removeCardFromCards :: Array Card -> Card -> Array Card
@@ -88,19 +89,24 @@ update model = case _ of
       pure $ SetDropSectionTarget cardSection
     ]
   DroppedOnDropSection from to ->
-    model :> [ do
-      let msg =
-            case model.draggedCard of
-              Nothing -> ClearDropSectionTarget
-              Just card -> MoveCardBetweenSections from to card
-      pure msg
-    ]
+    model :>
+      [ do
+          let msg =
+                case model.draggedCard of
+                  Nothing -> ClearDropSectionTarget
+                  Just card -> MoveCardBetweenSections from to card
+          pure msg
+      , pure ClearDraggedCard
+      , pure ClearDropSectionTarget
+      ]
   CardDragged ->
     model :> []
   SetDraggedCard card ->
     model { draggedCard = Just card } :> []
   SetDropSectionTarget cardSection->
     model { dropSectionTarget = Just cardSection } :> []
+  ClearDraggedCard ->
+    model { draggedCard = Nothing } :> []
   ClearDropSectionTarget ->
     model { dropSectionTarget = Nothing } :> []
   MoveCardBetweenSections Top Bottom card ->
@@ -125,30 +131,36 @@ view model = H.main [H.id "main"] [
     H.class' $ "card-section drop-section " <> droppingClass Top model.dropSectionTarget,
     onDrop $ DroppedOnDropSection Bottom Top,
     onDragOver $ DraggedOver Top
-  ] $ viewCard <$> topCards,
+  ] $ viewCard model.draggedCard <$> topCards,
   H.div [
     H.class' $ "card-section drop-section " <> droppingClass Bottom model.dropSectionTarget,
     onDrop $ DroppedOnDropSection Top Bottom,
     onDragOver $ DraggedOver Bottom
-  ] $ viewCard <$> bottomCards
+  ] $ viewCard model.draggedCard <$> bottomCards
 ] where
   topCards = model.topCards
   bottomCards =  model.bottomCards
 
-viewCard :: Card -> H.Html Msg
-viewCard card =
+viewCard :: Maybe Card -> Card -> H.Html Msg
+viewCard maybeDraggedCard card =
   H.div [
-    H.class' "card card-section-el",
+    H.class' $ "card card-section-el " <> draggedCardClass card maybeDraggedCard,
     draggable true,
     onDragStart (CardDragStarted card),
     onDragEnd (CardDragEnded card)
   ] [
-    H.text card.name
+    H.div [H.class' "card-contents"] [
+      H.text card.name
+    ]
   ]
 
 droppingClass :: CardSection -> Maybe CardSection -> String
 droppingClass _ Nothing = ""
 droppingClass cs (Just otherCs) = if cs == otherCs then "dropping" else ""
+
+draggedCardClass :: Card -> Maybe Card -> String
+draggedCardClass _ Nothing = ""
+draggedCardClass card (Just otherCard) = if card == otherCard then "dragged" else ""
 
 main :: Effect Unit
 main = do
