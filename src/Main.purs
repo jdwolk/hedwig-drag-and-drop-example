@@ -51,6 +51,8 @@ init = {
             , makeCard 2 "Schlum-schlum-schlumalum"
             , makeCard 3 "Wubba-lubba-dub-dub!"
             , makeCard 4 "And that's the WAAAAY the news goes!"
+            , makeCard 5 "A regular-old Plumbus"
+            , makeCard 6 "Hit the sack, Jack!"
             ],
   bottomCards: [],
   draggedCard: Nothing,
