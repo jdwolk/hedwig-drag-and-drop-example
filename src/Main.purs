@@ -73,6 +73,13 @@ data Msg = CardDragStarted Card
 removeCardFromCards :: Array Card -> Card -> Array Card
 removeCardFromCards cards card = Array.filter (\c -> not (c.id == card.id)) cards
 
+addCardToCards :: Array Card -> Card -> Array Card
+addCardToCards cards card =
+  case maybeFoundCard of
+    Just _ -> cards
+    Nothing -> Array.snoc cards card
+  where maybeFoundCard = Array.findIndex (\c -> c.id == card.id) cards
+
 update :: H.Update Model Msg
 update model = case _ of
   CardDragStarted card ->
@@ -113,17 +120,13 @@ update model = case _ of
     model { dropSectionTarget = Nothing } :> []
   MoveCardBetweenSections Top Bottom card ->
     model
-    { bottomCards = case Array.findIndex (\c -> c.id == card.id) model.bottomCards of
-                      Just _ -> model.bottomCards
-                      Nothing -> (Array.snoc model.bottomCards card)
+    { bottomCards = addCardToCards model.bottomCards card
     , topCards = removeCardFromCards model.topCards card
     } :> []
   MoveCardBetweenSections Bottom Top card ->
     model
     { bottomCards = removeCardFromCards model.bottomCards card
-    , topCards = case Array.findIndex (\c -> c.id == card.id) model.topCards of
-                      Just _ -> model.topCards
-                      Nothing -> (Array.snoc model.topCards card)
+    , topCards = addCardToCards model.topCards card
     } :> []
   MoveCardBetweenSections _ _ card -> model :> []
 

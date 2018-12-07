@@ -3,6 +3,7 @@
 ## Setup
 
 ```
+$ psc-package update
 $ yarn install
 ```
 
