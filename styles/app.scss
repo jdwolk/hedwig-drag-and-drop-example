@@ -26,6 +26,12 @@ $cardBG: orange;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
+  font-family: sans-serif;
+}
+
+.card-contents {
+  padding: 1.5vw;
 }
 
 .dragged.card {

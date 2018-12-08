@@ -31,19 +31,21 @@ type Card = {
   name :: String
 }
 
-makeCard :: Int -> String -> Card
-makeCard id name = { id, name }
-
-type Model = {
-  topCards :: Array Card,
-  bottomCards :: Array Card,
-  draggedCard :: Maybe Card,
-  dropSectionTarget :: Maybe CardSection
-}
+type Cards = Array Card
 
 data CardSection = Top | Bottom
 
 derive instance eqCardSection :: Eq CardSection
+
+makeCard :: Int -> String -> Card
+makeCard id name = { id, name }
+
+type Model = {
+  topCards :: Cards,
+  bottomCards :: Cards,
+  draggedCard :: Maybe Card,
+  dropSectionTarget :: Maybe CardSection
+}
 
 init :: Model
 init = {
@@ -70,10 +72,10 @@ data Msg = CardDragStarted Card
          | ClearDraggedCard
          | MoveCardBetweenSections CardSection CardSection Card
 
-removeCardFromCards :: Array Card -> Card -> Array Card
+removeCardFromCards :: Cards -> Card -> Cards
 removeCardFromCards cards card = Array.filter (\c -> not (c.id == card.id)) cards
 
-addCardToCards :: Array Card -> Card -> Array Card
+addCardToCards :: Cards -> Card -> Cards
 addCardToCards cards card =
   case maybeFoundCard of
     Just _ -> cards
