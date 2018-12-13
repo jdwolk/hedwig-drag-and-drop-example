@@ -1,14 +1,16 @@
 {
-  "name": "drag-example",
-  "set": "psc-0.12.1",
-  "source": "https://github.com/purescript/package-sets.git",
-  "depends": [
-    "aff",
-    "console",
-    "effect",
-    "hedwig",
-    "prelude",
-    "psci-support",
-    "web-events"
-  ]
+    "name": "drag-example",
+    "set": "psc-0.12.1",
+    "source": "https://github.com/purescript/package-sets.git",
+    "depends": [
+        "profunctor-lenses",
+        "generics-rep",
+        "aff",
+        "console",
+        "effect",
+        "hedwig",
+        "prelude",
+        "psci-support",
+        "web-events"
+    ]
 }

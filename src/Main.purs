@@ -12,6 +12,8 @@ import Hedwig.Devtools as Devtools
 import Hedwig.Foreign (on, on', property)
 import Web.Event.Event as Event
 
+import DragDrop.Types
+
 onDrag = on' "drag"
 onDragEnd = on' "dragend"
 onDragEnter = on' "dragenter"
@@ -26,39 +28,20 @@ onDragOver msg = on "dragover" $ \event -> do
 
 draggable = property "draggable"
 
-type Card = {
-  id :: Int,
-  name :: String
-}
-
-type Cards = Array Card
-
-data CardSection = Top | Bottom
-
-derive instance eqCardSection :: Eq CardSection
-
-makeCard :: Int -> String -> Card
-makeCard id name = { id, name }
-
-type Model = {
-  topCards :: Cards,
-  bottomCards :: Cards,
-  draggedCard :: Maybe Card,
-  dropSectionTarget :: Maybe CardSection
-}
-
 init :: Model
 init = {
-  topCards: [ makeCard 1 "Get Schwifty"
-            , makeCard 2 "Schlum-schlum-schlumalum"
-            , makeCard 3 "Wubba-lubba-dub-dub!"
-            , makeCard 4 "And that's the WAAAAY the news goes!"
-            , makeCard 5 "A regular-old Plumbus"
-            , makeCard 6 "Hit the sack, Jack!"
-            ],
-  bottomCards: [],
   draggedCard: Nothing,
-  dropSectionTarget: Nothing
+  dropSectionTarget: Nothing,
+  sections: {
+    top: [ makeCard 1 "Get Schwifty"
+         , makeCard 2 "Schlum-schlum-schlumalum"
+         , makeCard 3 "Wubba-lubba-dub-dub!"
+         , makeCard 4 "And that's the WAAAAY the news goes!"
+         , makeCard 5 "A regular-old Plumbus"
+         , makeCard 6 "Hit the sack, Jack!"
+         ],
+    bottom: []
+  }
 }
 
 data Msg = CardDragStarted Card
@@ -121,15 +104,11 @@ update model = case _ of
   ClearDropSectionTarget ->
     model { dropSectionTarget = Nothing } :> []
   MoveCardBetweenSections Top Bottom card ->
-    model
-    { bottomCards = addCardToCards model.bottomCards card
-    , topCards = removeCardFromCards model.topCards card
-    } :> []
+    (setMTop (removeCardFromCards model.sections.top card) $
+      (setMBottom (addCardToCards model.sections.bottom card) model)) :> []
   MoveCardBetweenSections Bottom Top card ->
-    model
-    { bottomCards = removeCardFromCards model.bottomCards card
-    , topCards = addCardToCards model.topCards card
-    } :> []
+    (setMTop (addCardToCards model.sections.top card) $
+      (setMBottom (removeCardFromCards model.sections.bottom card) model)) :> []
   MoveCardBetweenSections _ _ card -> model :> []
 
 view :: Model -> H.Html Msg
@@ -145,8 +124,8 @@ view model = H.main [H.id "main"] [
     onDragOver $ DraggedOver Bottom
   ] $ viewCard model.draggedCard <$> bottomCards
 ] where
-  topCards = model.topCards
-  bottomCards =  model.bottomCards
+  topCards = model.sections.top
+  bottomCards =  model.sections.bottom
 
 viewCard :: Maybe Card -> Card -> H.Html Msg
 viewCard maybeDraggedCard card =
